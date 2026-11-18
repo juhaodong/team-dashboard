@@ -1,0 +1,10 @@
+{
+  "_doc": "MR grouping for the Slack review message and the board. An MR joins the first group whose refs list it or whose tickets share a key with its title.",
+  "groups": [
+    { "tickets": ["APP-0000"], "refs": [], "label": "Lot 1 – what this group of MRs does (APP-0000)" }
+  ],
+  "exclude": [],
+  "excludeReason": {},
+  "reviewerNames": { "gitlab.username": "First name" },
+  "jiraKnown": {}
+}

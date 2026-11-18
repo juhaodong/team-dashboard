@@ -1,0 +1,47 @@
+{
+  "name": "Firstname Lastname",
+  "email": "first.last@example.com",
+  "language": "en",
+  "quietReply": "Nothing new",
+  "slack": {
+    "userId": "U0XXXXXXXXX",
+    "teamChannel": "C0XXXXXXXXX"
+  },
+  "gitlab": {
+    "host": "gitlab.example.com",
+    "username": "first.last"
+  },
+  "jira": {
+    "accountId": "",
+    "reviewerDefault": "",
+    "sites": {
+      "main": "https://your-org.atlassian.net",
+      "partner": ""
+    }
+  },
+  "partner": {
+    "defectJql": "",
+    "qaStories": []
+  },
+  "workingHours": {
+    "days": "Mon-Fri",
+    "from": "09:00",
+    "to": "18:00",
+    "tz": "Europe/Berlin"
+  },
+  "stateDir": "~/.config/team-dashboard/state/",
+  "repos": {
+    "backend": {
+      "path": "~/code/backend",
+      "remote": "group/backend"
+    },
+    "frontend": {
+      "path": "~/code/frontend",
+      "remote": "group/frontend"
+    }
+  },
+  "primaryRepo": "backend",
+  "board": {
+    "url": ""
+  }
+}

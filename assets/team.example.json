@@ -1,0 +1,12 @@
+{
+  "gitlab": { "host": "gitlab.example.com" },
+  "jira": { "sites": { "main": "https://your-org.atlassian.net", "partner": "https://partner-org.atlassian.net" } },
+  "slack": { "teamChannel": "C0XXXXXXXXX" },
+  "repos": {
+    "backend": { "remote": "group/backend" },
+    "frontend": { "remote": "group/frontend" },
+    "docs": { "remote": "group/docs" }
+  },
+  "primaryRepo": "backend",
+  "partner": { "defectJql": "project = PARTNER AND created >= -1d AND summary ~ \"your-org\"", "qaStories": [] }
+}

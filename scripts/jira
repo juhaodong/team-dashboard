@@ -1,0 +1,26 @@
+#!/bin/zsh
+# Jira / Confluence REST from the terminal. The Atlassian API token comes from the macOS keychain item
+# "atlassian-api-token" (account = config email) and is never printed.
+# Sites come from config.jira.sites, e.g. {"main": "https://acme.atlassian.net", "partner": "https://partner.atlassian.net"}.
+# Usage: jira [--site main|partner|<name>] GET|DELETE <path>
+#        jira [--site …] POST|PUT <path> <json|@file>
+#        jira md2adf <file.md|->            Markdown → ADF document
+#        jira user <email|name>             accountId<TAB>displayName
+set -e
+here=${0:A:h}
+config=${TEAM_DASHBOARD_CONFIG:-$HOME/.config/team-dashboard/config.json}
+site=main
+if [[ $1 == --site ]]; then site=$2; shift 2; fi
+read email base < <(/usr/bin/env python3 -c 'import json,sys;c=json.load(open(sys.argv[1]));print(c["email"],c["jira"]["sites"][sys.argv[2]])' "$config" "$site")
+case $1 in
+  md2adf) exec /usr/bin/env python3 "$here/md2adf.py" "$2" ;;
+  user) "$0" --site "$site" GET "/rest/api/3/user/search?query=$(/usr/bin/env python3 -c 'import sys,urllib.parse;print(urllib.parse.quote(sys.argv[1]))' "$2")" \
+          | /usr/bin/env python3 -c 'import json,sys;[print(u["accountId"]+"\t"+u["displayName"]) for u in json.load(sys.stdin)]'; exit ;;
+  GET|POST|PUT|DELETE) ;;
+  *) print -u2 "usage: jira [--site s] GET|POST|PUT|DELETE <path> [json|@file] | md2adf <file> | user <email>"; exit 2 ;;
+esac
+method=$1; path=$2; body=$3
+token=$(/usr/bin/security find-generic-password -a "$email" -s atlassian-api-token -w)
+args=(-s --max-time 30 -X "$method" -K - -H "Accept: application/json")
+[[ -n "$body" ]] && args+=(-H "Content-Type: application/json" --data-binary "$body")
+print -r -- "user = \"$email:$token\"" | /usr/bin/curl "${args[@]}" "$base$path"

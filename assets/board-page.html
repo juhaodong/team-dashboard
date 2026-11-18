@@ -1,0 +1,232 @@
+<title>{{NAME}} Dashboard</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one column of panels, the decision panel first; each panel is a header strip plus rows with a state stripe. */
+:root {
+  --bg: #f5f6f4;
+  --surface: #ffffff;
+  --fg: #1d2420;
+  --muted: #5d6862;
+  --line: #dde2de;
+  --accent: #1f6f5c;
+  --warn: #b25e09;
+  --crit: #b3261e;
+  --wait: #4a5fb0;
+  --ok: #2e7d32;
+  --code-bg: #eef1ef;
+  --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #131715; --surface: #1b201d; --fg: #e3e8e4; --muted: #96a29b; --line: #2c3430;
+    --accent: #5cc0a3; --warn: #e3a04f; --crit: #f07a70; --wait: #8fa2ee; --ok: #7cc47f; --code-bg: #232a26;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #131715; --surface: #1b201d; --fg: #e3e8e4; --muted: #96a29b; --line: #2c3430;
+  --accent: #5cc0a3; --warn: #e3a04f; --crit: #f07a70; --wait: #8fa2ee; --ok: #7cc47f; --code-bg: #232a26;
+  color-scheme: dark;
+}
+body { background: var(--bg); color: var(--fg); font-family: var(--sans); font-size: 15px; line-height: 1.5; }
+.wrap { max-width: 980px; margin: 0 auto; padding-block: 24px 48px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: flex; flex-direction: column; gap: 20px; }
+header { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px; }
+h1 { font-size: 22px; font-weight: 600; margin: 0; letter-spacing: -0.01em; }
+.stamp { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.panel-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 12px 16px; border-bottom: 1px solid var(--line); }
+.panel-head h2 { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; margin: 0; }
+.count { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.panel-head .spacer { flex: 1; }
+.note { padding: 10px 16px 0; color: var(--muted); font-size: 13px; }
+button.copy { font: 500 13px var(--sans); color: var(--accent); background: transparent; border: 1px solid var(--accent); border-radius: 6px; padding: 4px 12px; cursor: pointer; }
+button.copy:hover { background: var(--code-bg); }
+button.copy:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+pre.copytext { margin: 12px 16px 16px; padding: 12px; background: var(--code-bg); border-radius: 6px; font: 12.5px/1.55 var(--mono); white-space: pre-wrap; word-break: break-word; max-height: 360px; overflow: auto; }
+ul.rows { list-style: none; margin: 0; padding: 0; }
+ul.rows li { display: grid; grid-template-columns: 4px 1fr; border-top: 1px solid var(--line); }
+ul.rows li:first-child { border-top: 0; }
+.stripe { background: var(--line); }
+li[data-state="crit"] .stripe { background: var(--crit); }
+li[data-state="warn"] .stripe { background: var(--warn); }
+li[data-state="wait"] .stripe { background: var(--wait); }
+li[data-state="ok"] .stripe { background: var(--ok); }
+.row { padding: 10px 16px; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.row-top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 10px; }
+.row-title { font-weight: 500; }
+.tag { font-family: var(--mono); font-size: 11.5px; color: var(--muted); border: 1px solid var(--line); border-radius: 4px; padding: 0 6px; }
+.detail { color: var(--muted); font-size: 13.5px; }
+.links { display: flex; flex-wrap: wrap; gap: 4px 12px; font-family: var(--mono); font-size: 12.5px; }
+.links a { color: var(--accent); text-decoration: none; }
+.links a:hover { text-decoration: underline; }
+.empty { padding: 14px 16px; color: var(--muted); font-size: 13.5px; }
+.state-msg { padding: 32px 16px; text-align: center; color: var(--muted); }
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); overflow-x: auto; scrollbar-width: none; }
+.tabs::-webkit-scrollbar { display: none; }
+.tab { flex: none; display: inline-flex; align-items: baseline; gap: 6px; font: 500 14px var(--sans); color: var(--muted); background: transparent; border: 0; border-bottom: 2px solid transparent; margin-bottom: -1px; padding: 8px 12px; cursor: pointer; white-space: nowrap; }
+.tab:hover { color: var(--fg); }
+.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--accent); }
+.tab:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.tab .n { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.tab .n.hot { color: #fff; background: var(--crit); border-radius: 9px; padding: 0 6px; }
+@media (prefers-reduced-motion: no-preference) { button.copy { transition: background .15s; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>{{NAME}} Dashboard</h1>
+    <span class="stamp" id="stamp">Loading…</span>
+  </header>
+  <nav class="tabs" id="tabs" role="tablist" aria-label="Topics"></nav>
+  <main id="panels" style="display:flex;flex-direction:column;gap:20px">
+    <div class="state-msg" id="msg">Loading the board…</div>
+  </main>
+</div>
+
+<script>
+(function () {
+  const root = document.getElementById('panels');
+  const stamp = document.getElementById('stamp');
+  const msg = document.getElementById('msg');
+
+  const fmt = (iso) => {
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (isNaN(d)) return iso;
+    return d.toLocaleString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+  };
+
+  const el = (tag, cls, text) => {
+    const n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  };
+
+  function copyButton(text) {
+    const b = el('button', 'copy', 'Copy');
+    b.type = 'button';
+    b.addEventListener('click', () => {
+      const done = () => { b.textContent = 'Copied'; setTimeout(() => { b.textContent = 'Copy'; }, 1600); };
+      const fallback = () => {
+        const pre = b.closest('.panel').querySelector('pre.copytext');
+        if (!pre) return;
+        const r = document.createRange(); r.selectNodeContents(pre);
+        const s = getSelection(); s.removeAllRanges(); s.addRange(r);
+        b.textContent = 'Selected, press ⌘C';
+      };
+      try {
+        navigator.clipboard.writeText(text).then(done, fallback);
+      } catch (e) { fallback(); }
+    });
+    return b;
+  }
+
+  function renderPanel(p) {
+    const sec = el('section', 'panel');
+    const head = el('div', 'panel-head');
+    head.appendChild(el('h2', null, p.title || p.id));
+    const items = Array.isArray(p.items) ? p.items : [];
+    if (items.length) head.appendChild(el('span', 'count', String(items.length)));
+    head.appendChild(el('span', 'spacer'));
+    if (p.updatedAt) head.appendChild(el('span', 'stamp', fmt(p.updatedAt)));
+    if (p.copy) head.appendChild(copyButton(p.copy));
+    sec.appendChild(head);
+    if (p.note) sec.appendChild(el('div', 'note', p.note));
+    if (p.copy) sec.appendChild(el('pre', 'copytext', p.copy));
+    if (items.length) {
+      const ul = el('ul', 'rows');
+      for (const it of items) {
+        const li = el('li');
+        li.dataset.state = it.state || 'info';
+        li.appendChild(el('span', 'stripe'));
+        const row = el('div', 'row');
+        const top = el('div', 'row-top');
+        top.appendChild(el('span', 'row-title', it.title || ''));
+        for (const t of (it.tags || [])) top.appendChild(el('span', 'tag', t));
+        row.appendChild(top);
+        if (it.detail) row.appendChild(el('div', 'detail', it.detail));
+        if (Array.isArray(it.links) && it.links.length) {
+          const ls = el('div', 'links');
+          for (const l of it.links) {
+            if (!l || !/^https?:\/\//.test(l.url || '')) continue;
+            const a = el('a', null, l.label || l.url);
+            a.href = l.url; a.target = '_blank'; a.rel = 'noopener';
+            ls.appendChild(a);
+          }
+          row.appendChild(ls);
+        }
+        li.appendChild(row);
+        ul.appendChild(li);
+      }
+      sec.appendChild(ul);
+    } else if (!p.copy) {
+      sec.appendChild(el('div', 'empty', p.emptyText || 'Nothing here.'));
+    }
+    return sec;
+  }
+
+  const tabsEl = document.getElementById('tabs');
+  let current = (location.hash || '').slice(1);
+  if (!current) { try { current = localStorage.getItem('tab') || ''; } catch (e) {} }
+  let lastPanels = [];
+
+  function select(id) {
+    current = id;
+    try { localStorage.setItem('tab', id); } catch (e) {}
+    if (location.hash.slice(1) !== id) history.replaceState(null, '', '#' + id);
+    render(lastPanels);
+  }
+
+  window.addEventListener('hashchange', () => {
+    const id = location.hash.slice(1);
+    if (id && id !== current) { current = id; render(lastPanels); }
+  });
+
+  function render(panels) {
+    lastPanels = panels;
+    root.replaceChildren();
+    tabsEl.replaceChildren();
+    const shown = panels.filter((p) => !p.hidden);
+    if (!shown.length) {
+      root.appendChild(el('div', 'state-msg', 'No panels yet. The dashboard session fills this board on its next check.'));
+      stamp.textContent = '';
+      return;
+    }
+    if (!shown.some((p) => p.id === current)) current = shown[0].id;
+    let latest = '';
+    for (const p of shown) {
+      if (p.updatedAt && p.updatedAt > latest) latest = p.updatedAt;
+      const b = el('button', 'tab');
+      b.type = 'button';
+      b.setAttribute('role', 'tab');
+      b.setAttribute('aria-selected', String(p.id === current));
+      b.appendChild(el('span', null, p.title || p.id));
+      const n = Array.isArray(p.items) ? p.items.length : 0;
+      if (n) b.appendChild(el('span', 'n' + (p.id === 'attention' ? ' hot' : ''), String(n)));
+      b.addEventListener('click', () => select(p.id));
+      tabsEl.appendChild(b);
+      if (p.id === current) root.appendChild(renderPanel(p));
+    }
+    const active = tabsEl.querySelector('[aria-selected="true"]');
+    if (active && active.scrollIntoView) active.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    stamp.textContent = latest ? 'Updated ' + fmt(latest) : '';
+  }
+
+  const timer = setTimeout(() => { msg.textContent = 'The board is taking long to load. It needs a signed-in claude.ai view.'; }, 10000);
+
+  (async () => {
+    const db = window.claude && window.claude.use ? await window.claude.use('db') : null;
+    if (!db) { clearTimeout(timer); msg.textContent = 'This view cannot read the board. Open it signed in on claude.ai.'; stamp.textContent = ''; return; }
+    db.collection('panels').orderBy('order').onSnapshot((snap) => {
+      clearTimeout(timer);
+      render(snap.docs.map((d) => Object.assign({ id: d.id }, d.data() || {})));
+    }, (e) => {
+      clearTimeout(timer);
+      root.replaceChildren(el('div', 'state-msg', 'Could not load the board (' + (e && e.code || 'error') + '). Reload the page.'));
+    });
+  })();
+})();
+</script>
